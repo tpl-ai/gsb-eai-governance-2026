@@ -79,3 +79,5 @@ other Vercel-connected repo.
 | `→` / `←` | Next / previous slide |
 | `Space` or click | Advance |
 | `ESC` | Slide index |
+
+<!-- deploy-trigger: force a Vercel preview deployment for the initial project connection -->
