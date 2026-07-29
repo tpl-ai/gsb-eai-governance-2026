@@ -2,939 +2,124 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" id="viewportMeta" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Enterprise AI in Practice #2 — Governance as Advantage</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    /* Surfaces */
-    --paper:#fafaf8;
-    --ink:#0a0a0a;
-    --grey-1:#f0f0ee;
-    --grey-2:#d4d4d2;
-    --grey-3:#737373;
-
-    /* Accent — Stanford Cardinal */
-    --accent:#8C1515;
-    --accent-on:#ffffff;
-    --accent-bright:#C4322D;   /* accent on dark backgrounds only */
-
-    /* Text roles — use these instead of opacity */
-    --text-primary:#0a0a0a;
-    --text-secondary:#525252;
-    --text-helper:#737373;
-    --text-on-color:#ffffff;
-    --border-subtle:#e0e0e0;
-
-    /* Type */
-    --sans:"Inter","Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
-    --mono:"JetBrains Mono","IBM Plex Mono","SF Mono",Consolas,ui-monospace,monospace;
-  }
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;background:var(--ink);}
-  body{font-family:var(--sans);overflow:hidden;}
-  .stage{position:fixed;inset:0;}
-  .slide{
-    position:absolute;inset:0;display:none;flex-direction:column;
-    padding:clamp(28px,4.5vw,64px) clamp(32px,5.5vw,80px);
-    transition:opacity .35s ease;
-  }
-  .slide.active{display:flex;}
-  /* Three-tone system, matching June's index.html: light (paper), accent
-     (cardinal red — the deck's one dramatic tone), dark (true near-black,
-     reserved for photo slides like the ported iceberg slide). */
-  .slide.light{background:var(--paper);color:var(--ink);}
-  .slide.accent{background:var(--accent);color:var(--accent-on);}
-  .slide.dark{background:var(--ink);color:var(--paper);}
-
-  /* Emphasis — no italic serif anywhere in this deck. Accent color +
-     weight instead of italics, matching the June reference system. */
-  .em{color:var(--accent);font-weight:600;}
-  .slide.accent .em, .slide.dark .em{color:var(--accent-on);}
-
-  .eyebrow{
-    font-family:var(--mono);font-size:14px;letter-spacing:.16em;
-    text-transform:uppercase;color:var(--text-helper);
-  }
-  .slide.accent .eyebrow, .slide.dark .eyebrow{color:rgba(255,255,255,.7);}
-  .footer{
-    position:absolute;left:0;right:0;bottom:22px;padding:0 clamp(32px,5.5vw,80px);
-    display:flex;justify-content:space-between;align-items:center;
-    font-family:var(--mono);font-size:14px;letter-spacing:.06em;color:var(--text-helper);
-  }
-  .slide.accent .footer, .slide.dark .footer{color:rgba(255,255,255,.7);}
-  .dots{
-    position:absolute;left:0;right:0;bottom:44px;display:flex;justify-content:center;
-    gap:5px;pointer-events:none;
-  }
-  .dot{width:5px;height:5px;border-radius:1px;background:var(--border-subtle);}
-  .slide.accent .dot, .slide.dark .dot{background:rgba(255,255,255,.3);}
-  .dot.active{background:var(--accent);}
-  .slide.accent .dot.active, .slide.dark .dot.active{background:var(--accent-on);}
-  .body-copy{font-size:max(18px,1.08vw);line-height:1.55;color:var(--text-secondary);max-width:none;}
-  .slide.accent .body-copy, .slide.dark .body-copy{color:rgba(255,255,255,.85);}
-  .content{flex:1;display:flex;flex-direction:column;justify-content:center;gap:20px;padding-bottom:60px;}
-
-  /* Slide title — the workhorse heading, used by toc/scenario/stakes/grid/flow.
-     No width cap: content fills the full slide width (design-system rule). */
-  .statement-head{font-weight:200;font-size:min(5vw,8.4vh);line-height:1.1;}
-  /* Secondary-scale heading: options-slide title, risk-read title. */
-  .head-secondary{font-weight:200;font-size:min(4.6vw,7.6vh);line-height:1.15;}
-  /* Large item label — role names, list/flow item titles. */
-  .label-large{font-weight:300;font-size:min(3vw,5vh);line-height:1.1;}
-
-  /* ---- Cover (intro) ---- */
-  .cover-top{font-family:var(--mono);font-size:14px;letter-spacing:.16em;color:rgba(255,255,255,.7);text-transform:uppercase;}
-  .cover-intro-headline{font-family:var(--sans);font-weight:200;font-size:min(11vw,15vh);line-height:1.02;margin-top:15vh;letter-spacing:-.01em;}
-  .cover-sub{font-size:min(2.2vw,3.6vh);font-weight:300;color:rgba(255,255,255,.85);margin-top:22px;max-width:46ch;line-height:1.35;}
-  .cover-meta{position:absolute;left:clamp(32px,5.5vw,80px);bottom:80px;display:flex;flex-direction:column;gap:5px;}
-  .cover-meta .cm-when{font-size:16px;font-weight:600;}
-  .cover-meta .cm-where{font-family:var(--mono);font-size:14px;letter-spacing:.05em;color:rgba(255,255,255,.7);}
-
-  /* ---- Scenario ---- */
-  .roles-table{margin-top:10px;border-top:1px solid var(--border-subtle);}
-  .role-row{display:grid;grid-template-columns:1.1fr 1.2fr 2fr;gap:24px;padding:18px 0;border-bottom:1px solid var(--border-subtle);align-items:baseline;}
-  .role-name{font-family:var(--sans);font-weight:300;font-size:min(3vw,5vh);}
-  .role-title{font-family:var(--mono);font-size:14px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;}
-  .role-desc{font-size:max(18px,1.08vw);color:var(--text-secondary);}
-
-  /* ---- list4 (TOC + Four Case Studies) ---- */
-  .list4{margin-top:6px;border-top:1px solid var(--border-subtle);}
-  .list4-row{display:grid;grid-template-columns:70px 1fr;gap:22px;padding:18px 0;border-bottom:1px solid var(--border-subtle);align-items:baseline;}
-  .list4-num{font-family:var(--sans);font-weight:200;font-size:min(3vw,5vh);color:var(--text-helper);}
-  .list4-title{font-family:var(--sans);font-weight:300;font-size:min(3vw,5vh);color:var(--text-helper);}
-  .list4-sub{font-size:max(18px,1.08vw);color:var(--text-helper);margin-top:4px;}
-  /* current-section highlight, same treatment as risk-read's dominant-dimension marker:
-     accent color + trailing arrow, nothing else invented. */
-  .list4-row.active .list4-num,
-  .list4-row.active .list4-title{color:var(--accent);}
-  .list4-row.active .list4-title::after{content:" ←";}
-  .slide.accent .list4,
-  .slide.dark .list4{border-top-color:rgba(255,255,255,.18);}
-  .slide.accent .list4-row,
-  .slide.dark .list4-row{border-bottom-color:rgba(255,255,255,.18);}
-  .slide.accent .list4-num, .slide.accent .list4-title,
-  .slide.dark .list4-num, .slide.dark .list4-title{color:rgba(255,255,255,.7);}
-  .slide.accent .list4-row.active .list4-num, .slide.accent .list4-row.active .list4-title,
-  .slide.dark .list4-row.active .list4-num, .slide.dark .list4-row.active .list4-title{color:var(--accent-on);}
-  .slide.accent .list4-sub, .slide.dark .list4-sub{color:rgba(255,255,255,.7);}
-
-  /* ---- stakes ---- */
-  .stakes-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px 36px;margin-top:8px;}
-  .stakes-item{border-top:1px solid var(--border-subtle);padding-top:10px;}
-  .stakes-kicker{font-family:var(--mono);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:5px;}
-  .stakes-detail{font-size:max(22px,2vw);color:var(--text-secondary);line-height:1.4;}
-  .stakes-callout{margin-top:16px;border-top:2px solid var(--accent);padding-top:14px;font-family:var(--sans);font-weight:200;font-size:min(3vw,5vh);color:var(--accent);line-height:1.3;}
-
-  /* ---- risk framework image (replaces the built tier ladder) ---- */
-  .risk-image-wrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;margin-top:8px;}
-  .risk-image{max-width:100%;max-height:100%;object-fit:contain;}
-
-  /* ---- placement matrix (grid) ---- */
-  .gridtable{display:grid;grid-template-columns:150px repeat(4,1fr);border-top:1px solid var(--border-subtle);margin-top:6px;}
-  .gcell{padding:14px 14px;font-size:max(18px,1.08vw);line-height:1.4;border-bottom:1px solid var(--border-subtle);}
-  .gcell.head{font-family:var(--mono);font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-helper);}
-  .gcell.dim{font-weight:600;font-size:15px;}
-  .gcell.t1{background:var(--grey-1);}
-  .gcell.t2{background:#d9e4e0;}
-  .gcell.t3{background:#f0d4c8;}
-  .gcell.t4{background:#e7b3aa;}
-  .grid-notes{margin-top:16px;display:flex;flex-direction:column;gap:6px;}
-  .grid-notes .rule{font-family:var(--sans);font-weight:600;font-size:max(18px,1.08vw);color:var(--accent);}
-
-  /* ---- flow ---- */
-  .flow{display:flex;align-items:stretch;gap:0;margin-top:10px;}
-  .flow-step{flex:1;background:rgba(255,255,255,.08);padding:26px 20px;text-align:center;font-family:var(--sans);font-weight:300;font-size:min(3vw,5vh);display:flex;align-items:center;justify-content:center;min-height:110px;}
-  .flow-step.hi{background:var(--paper);color:var(--accent);font-weight:700;}
-  .flow-arrow{width:34px;display:flex;align-items:center;justify-content:center;font-size:18px;color:rgba(255,255,255,.7);}
-
-  /* ---- case opener ---- */
-  .case-tag{font-family:var(--mono);font-size:14px;letter-spacing:.1em;color:rgba(255,255,255,.7);text-transform:uppercase;}
-  .case-title{font-family:var(--sans);font-weight:200;font-size:min(4.6vw,7.6vh);line-height:1.15;max-width:32ch;margin-top:10px;}
-  .case-desc{margin-top:14px;font-size:max(22px,2vw);font-weight:400;color:rgba(255,255,255,.9);max-width:44ch;}
-  .case-why{margin-top:18px;font-size:max(22px,2vw);color:rgba(255,255,255,.85);}
-  .case-why b{color:var(--accent-on);font-weight:600;}
-  .case-scale{margin-top:6px;font-family:var(--mono);font-size:14px;color:rgba(255,255,255,.7);}
-  .case-risk{margin-top:22px;padding-top:16px;border-top:1px solid var(--border-subtle);}
-  .case-risk-label{font-family:var(--mono);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.7);margin-bottom:6px;}
-  /* Spec calls for "var(--accent)" here, matching the light-toned risk-read
-     assessment line -- but this slide's own background IS var(--accent), so
-     that would render invisible. Using --accent-on (white) for the same
-     "distinct, colored result line" effect against this slide's actual
-     background. Flagged in the Phase 3 report. */
-  .case-risk-text{font-size:max(20px,1.5vw);font-weight:400;color:var(--accent-on);}
-  .case-risk-text b{font-weight:700;}
-  .case-quote{margin-top:26px;padding-top:18px;border-top:1px solid rgba(255,255,255,.18);font-family:var(--sans);font-weight:300;font-size:max(22px,2vw);color:var(--accent-on);max-width:58ch;}
-  .case-quote span{display:block;margin-top:8px;font-family:var(--mono);font-size:14px;color:rgba(255,255,255,.7);letter-spacing:.06em;text-transform:uppercase;}
-
-  /* ---- risk read ---- */
-  .dims{display:flex;flex-direction:column;gap:20px;margin-top:8px;}
-  .dim-row{display:grid;grid-template-columns:minmax(220px,320px) 200px 1fr;gap:20px;align-items:start;}
-  .dim-label{font-family:var(--sans);font-weight:300;font-size:min(2.2vw,3.6vh);line-height:1.1;}
-  .dim-bar{display:flex;gap:4px;margin-top:8px;}
-  .dim-cell{flex:1;height:26px;border:1px solid var(--border-subtle);background:transparent;}
-  .dim-cell.on1{background:var(--grey-1);border-color:var(--grey-1);}
-  .dim-cell.on2{background:var(--grey-3);border-color:var(--grey-3);}
-  .dim-cell.on3{background:var(--accent-bright);border-color:var(--accent-bright);}
-  .dim-cell.on4{background:var(--accent);border-color:var(--accent);}
-  .dim-desc{font-size:max(18px,1.08vw);font-weight:400;color:var(--text-secondary);line-height:1.5;padding-top:2px;}
-  .dim-row.dominant .dim-label{color:var(--accent);}
-  .dim-row.dominant .dim-label::after{content:" ←";}
-  .riskread-assessment{margin-top:22px;border-top:1px solid var(--border-subtle);padding-top:18px;font-family:var(--sans);font-weight:400;font-size:max(20px,1.5vw);line-height:1.4;color:var(--accent);}
-
-  /* ---- options ---- */
-  .options-head{font-family:var(--sans);font-weight:200;font-size:min(4.6vw,7.6vh);line-height:1.15;max-width:32ch;}
-  .cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:8px;}
-  .card{background:var(--grey-1);padding:20px 18px;display:flex;flex-direction:column;gap:10px;min-height:300px;transition:background .3s ease,color .3s ease;}
-  .card-letter{font-family:var(--mono);font-size:14px;color:var(--accent);letter-spacing:.08em;}
-  .card-title{font-family:var(--sans);font-weight:600;font-size:max(22px,2vw);line-height:1.25;}
-  .card-desc{font-size:max(18px,1.08vw);color:var(--text-secondary);line-height:1.5;flex:1;}
-  /* Click 2 of the options reveal: the recommended card turns accent, white text. */
-  .card.recommended{background:var(--accent);}
-  .card.recommended .card-letter{color:var(--accent-on);}
-  .card.recommended .card-title{color:var(--accent-on);}
-  .card.recommended .card-desc{color:rgba(255,255,255,.85);}
-  .options-reasoning{
-    margin-top:18px;font-family:var(--sans);font-weight:400;font-size:max(22px,2vw);color:var(--accent);
-    opacity:0;transition:opacity .4s ease;
-  }
-  .options-reasoning.show{opacity:1;}
-
-  /* ---- close ---- */
-  /* (case-headline-style class reused for the close slide's head — see .case-title) */
-
-  /* ---- index overlay ---- */
-  #indexOverlay{
-    position:fixed;inset:0;background:rgba(10,10,10,.96);z-index:50;display:none;
-    padding:60px clamp(32px,6vw,90px);overflow-y:auto;
-  }
-  #indexOverlay.show{display:block;}
-  #indexOverlay h2{color:var(--paper);font-weight:200;font-size:28px;margin-bottom:26px;}
-  .idx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;}
-  .idx-item{
-    border:1px solid rgba(255,255,255,.18);padding:14px 16px;cursor:pointer;color:rgba(255,255,255,.7);
-    font-size:14px;line-height:1.4;transition:.15s;
-  }
-  .idx-item:hover{background:rgba(255,255,255,.06);color:var(--paper);}
-  .idx-item .idx-num{font-family:var(--mono);color:var(--accent-bright);margin-right:8px;}
-
-  @media(max-width:820px){
-    .role-row{grid-template-columns:1fr;gap:4px;}
-    .cards3{grid-template-columns:1fr;}
-    .stakes-cols{grid-template-columns:1fr;}
-    .flow{flex-direction:column;}
-    .flow-arrow{transform:rotate(90deg);}
-    .gridtable{grid-template-columns:100px repeat(4,1fr);font-size:14px;}
-    .dim-row{grid-template-columns:1fr;gap:6px;}
-    .dim-row .dim-desc{order:3;}
+  html,body{height:100%;background:#0c0a09;overflow:hidden;touch-action:none;}
+  #stageOuter{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  #deckFrame{
+    width:1280px;height:720px;border:0;flex-shrink:0;display:block;
+    background:#0c0a09;transform-origin:center center;
   }
 
-  /* ============================================================
-     INDEX.HTML PORT DEPENDENCIES — unchanged since Phase 1.
-     Scoped to .slide.index-port only. These seven slides are restored
-     verbatim from index.html and are NOT restyled by this design pass —
-     they are the reference the rest of the deck now matches.
-     ============================================================ */
-  .slide.index-port{
-    padding:0;overflow:hidden;
-    --paper:#fafaf8;--ink:#0a0a0a;
-    --grey-1:#f0f0ee;--grey-2:#d4d4d2;--grey-3:#737373;
-    --accent:#8C1515;--accent-on:#ffffff;--accent-bright:#C4322D;
-    --text-primary:#0a0a0a;--text-secondary:#525252;--text-helper:#737373;
-    --border-subtle:#e0e0e0;
-    --sans:"Inter","Helvetica Neue","Helvetica","Arial","Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
-    --sans-zh:"PingFang SC","Hiragino Sans GB","Source Han Sans SC","Noto Sans SC","Microsoft YaHei UI","Microsoft YaHei","微软雅黑",sans-serif;
-    --mono:"JetBrains Mono","IBM Plex Mono","SF Mono","Cascadia Code","Consolas","Courier New",ui-monospace,monospace;
-    --sp-9:48px;
+  /* ---- portrait orientation hint ----
+     Shown once per session on narrow, portrait screens. A 16:9 slide at
+     390px-wide portrait renders roughly 390x219 -- legible but small;
+     landscape on the same device is roughly 844x475, which reads far
+     better. Dismissing hides it for the rest of the session, not just
+     the current slide. */
+  #portraitHint{
+    position:fixed;left:0;right:0;bottom:0;z-index:100;
+    display:none;align-items:center;justify-content:space-between;gap:16px;
+    padding:16px 20px calc(16px + env(safe-area-inset-bottom));
+    background:#8C1515;color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;
+    font-size:15px;line-height:1.3;
   }
-  .index-port .canvas-card{
-    width:100vw;height:100vh;
-    background:var(--paper);color:var(--ink);
-    padding:5.6vh 5vw 4.4vh;
-    display:flex;flex-direction:column;
-    position:relative;overflow:hidden;
-  }
-  .index-port .canvas-card .chrome-min{
-    display:flex;justify-content:space-between;align-items:flex-start;
-    font-family:var(--mono);font-size:14px;font-weight:500;
-    letter-spacing:.14em;text-transform:uppercase;
-    color:var(--text-helper);
-    flex:0 0 auto;
-    margin-bottom:var(--sp-9);
-  }
-  .index-port .canvas-card .chrome-min .l,
-  .index-port .canvas-card .chrome-min .r{max-width:48vw;line-height:1.5;}
-  .index-port .t-meta{
-    font-family:var(--mono);
-    font-size:14px;font-weight:500;
-    letter-spacing:.14em;text-transform:uppercase;
-    color:var(--text-helper);line-height:1.45;
-  }
-  .index-port .t-body{
-    font-family:var(--sans),var(--sans-zh);
-    font-size:18px;font-weight:400;
-    color:var(--text-primary);line-height:1.5;
-    letter-spacing:-.005em;
+  #portraitHint.show{display:flex;}
+  #portraitHint button{
+    flex-shrink:0;border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;
+    font:inherit;font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+    padding:8px 14px;border-radius:3px;
   }
 </style>
 </head>
 <body>
-<div class="stage" id="stage"></div>
-<div class="dots" id="dots"></div>
-<div class="footer" id="footerBar">
-  <span id="footerLeft"></span>
-  <span id="footerRight"></span>
+<div id="stageOuter">
+  <iframe id="deckFrame" src="deck.html" title="Enterprise AI in Practice #2 — Governance as Advantage"></iframe>
 </div>
-<div id="indexOverlay">
-  <h2>Enterprise AI in Practice #2 — Index <span style="font-family:var(--mono);font-size:13px;color:rgba(255,255,255,.7);">(esc to close)</span></h2>
-  <div class="idx-grid" id="idxGrid"></div>
+<div id="portraitHint">
+  <span>Rotate for a larger view.</span>
+  <button id="portraitHintDismiss">Got it</button>
 </div>
 
 <script>
-/* ============ CONTENT ============ */
-const S = [];
+const frame = document.getElementById('deckFrame');
+const stageOuter = document.getElementById('stageOuter');
+const portraitHint = document.getElementById('portraitHint');
+const viewportMeta = document.getElementById('viewportMeta');
 
-const TOC_ITEMS = [
-  ['01','Recap','Where we left off.'],
-  ['02','The Shadow AI Role Play','Four cases, live.'],
-  ['03','Skills Demo','Confirmed at 6:30.']
-];
-
-/* 0 — Welcome / cover (intro). Copy unchanged — restyle only (Cardinal,
-   not black, matching June's own cover). */
-S.push({type:'cover-intro', tone:'accent',
-  eyebrow:'Enterprise AI in Practice · #2',
-  headline:'Governance as *Advantage*',
-  sub:'Thank you for joining us this evening. Let’s get to work.',
-  when:'Thursday, July 30 · 6:30–9:30 PM',
-  where:'SQ Collective × Gen-AI Labs, Singapore',
-  foot:'30.07.2026'
-});
-
-/* 1 — Table of contents (first appearance — highlights Recap).
-   tone:'accent', not 'light' like the other two TOC appearances: without
-   this, the sequence toc -> SWISS-SURVEY -> SWISS-HOOK-95 is three
-   consecutive light slides in a row, and the latter two are untouchable
-   verbatim June ports. Recoloring this one TOC appearance is the only
-   available lever; the other two TOC appearances stay 'light'. */
-S.push({type:'toc', tone:'accent', eyebrow:'Tonight’s Agenda',
-  head:'Three Parts to Tonight',
-  items:TOC_ITEMS,
-  active:0,
-  foot:'Enterprise AI in Practice · Session Two'
-});
-
-/* 2–8 — Recap, restored verbatim from index.html (Session One keynote).
-   Untouched by the design pass — these seven are the reference the rest
-   of this deck now matches. Stale June page-number footers (this deck's own numbering now shows through)
-   stripped; this deck numbers itself out of its own total. */
-
-S.push({type:'indexport', raw:"<section class=\"slide\" data-layout=\"SWISS-SURVEY\" data-animate=\"pillar-fade\">\n  <div class=\"canvas-card\">\n    <div class=\"chrome-min\">\n      <div class=\"l\">WHAT YOU TOLD US</div>\n      <div class=\"r\"></div>\n    </div>\n\n    <div style=\"flex:1;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--border-subtle);min-height:0;margin-bottom:2vh\">\n      <div style=\"background:var(--paper);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:3vh 3vw;gap:1.4vh\">\n        <div style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(5vw,8.4vh);line-height:1;letter-spacing:-.03em;color:var(--ink)\">Too many tools</div>\n        <div style=\"font-family:var(--sans);font-size:max(22px,2vw);color:var(--text-helper);letter-spacing:.01em;line-height:1.4\">which do I pick, and how</div>\n      </div>\n      <div style=\"background:var(--paper);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:3vh 3vw;gap:1.4vh\">\n        <div style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(5vw,8.4vh);line-height:1;letter-spacing:-.03em;color:var(--ink)\">Trust</div>\n        <div style=\"font-family:var(--sans);font-size:max(22px,2vw);color:var(--text-helper);letter-spacing:.01em;line-height:1.4\">still errs, still needs a human</div>\n      </div>\n      <div style=\"background:var(--paper);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:3vh 3vw;gap:1.4vh\">\n        <div style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(5vw,8.4vh);line-height:1;letter-spacing:-.03em;color:var(--ink)\">Data &amp; governance</div>\n        <div style=\"font-family:var(--sans);font-size:max(22px,2vw);color:var(--text-helper);letter-spacing:.01em;line-height:1.4\">our own data, without leaking it</div>\n      </div>\n      <div style=\"background:var(--paper);display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:3vh 3vw;gap:1.4vh\">\n        <div style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(5vw,8.4vh);line-height:1;letter-spacing:-.03em;color:var(--ink)\">People</div>\n        <div style=\"font-family:var(--sans);font-size:max(22px,2vw);color:var(--text-helper);letter-spacing:.01em;line-height:1.4\">replacement fear, low literacy, glorified chatbot</div>\n      </div>\n    </div>\n\n    <div style=\"display:flex;justify-content:space-between;align-items:end;border-top:1px solid var(--border-subtle);padding-top:1.6vh;margin-top:2vh\">\n      <div class=\"t-meta\">STANFORD GSB CHAPTER SINGAPORE · PARTICIPANT SURVEY · 2026</div>\n    </div>\n  </div>\n</section>", title:'What You Told Us'});
-
-S.push({type:'indexport', raw:"<section class=\"slide\" data-layout=\"SWISS-HOOK-95\" data-animate=\"hook-95\">\n  <div class=\"canvas-card\">\n    <div class=\"chrome-min\">\n      <div class=\"l\">THE GENAI DIVIDE</div>\n      <div class=\"r\"></div>\n    </div>\n\n    <div style=\"flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;position:relative;min-height:0\">\n\n      <div data-anim=\"hook-num\" style=\"display:flex;flex-direction:column;gap:0;width:100%\">\n        <div style=\"font-family:var(--sans);font-weight:200;font-size:min(37vw,55vh);line-height:.82;letter-spacing:-.06em;color:var(--accent);font-feature-settings:'tnum';white-space:nowrap\">\n          95<span style=\"font-size:.42em;font-weight:300;opacity:.78;vertical-align:.55em;margin-left:.02em;color:var(--accent)\">%</span>\n        </div>\n        <div class=\"t-body\" style=\"color:var(--text-secondary);font-size:max(22px,2vw);line-height:1.4;margin-top:2.4vh;max-width:52ch\">\n          of enterprise GenAI projects failed with <span style=\"color:var(--accent);font-weight:600\">zero ROI</span>?\n        </div>\n      </div>\n    </div>\n\n    <div style=\"display:flex;justify-content:space-between;align-items:end;border-top:1px solid var(--border-subtle);padding-top:1.6vh;margin-top:2vh\">\n      <div class=\"t-meta\">SOURCE · MIT NANDA · STATE OF AI IN BUSINESS · 2025</div>\n    </div>\n  </div>\n</section>", title:'The GenAI Divide'});
-
-S.push({type:'indexport', raw:"<section class=\"slide accent\" data-layout=\"SWISS-JCURVE-FRESH\" data-animate=\"jcurve-fresh\">\n  <div class=\"canvas-card\" style=\"background:var(--accent)\">\n    <div class=\"chrome-min\" style=\"color:rgba(255,255,255,.7)\">\n      <div class=\"l\"></div>\n      <div class=\"r\"></div>\n    </div>\n\n    <!-- headline -->\n    <div data-anim=\"jcurve-headline\" style=\"display:flex;flex-direction:column;gap:1.4vh;margin-bottom:1.6vh\">\n      <div class=\"t-meta\" style=\"letter-spacing:.22em;font-weight:600;color:rgba(255,255,255,.7)\">EVERY NEW TECH ADOPTION FOLLOWS THE PATTERN</div>\n      <h2 style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(5vw,8.4vh);line-height:1;letter-spacing:-.025em;color:#fff\">\n        The Productivity J-Curve\n      </h2>\n    </div>\n\n    <!-- chart canvas -->\n    <div style=\"flex:1;position:relative;min-height:0;display:flex;align-items:stretch;margin-top:1vh\">\n      <svg class=\"jcurve-fresh-svg\" viewBox=\"0 0 1000 480\" preserveAspectRatio=\"xMidYMid meet\"\n           style=\"width:100%;height:100%;display:block;overflow:visible\" aria-hidden=\"true\">\n\n        <!-- y-axis (value) -->\n        <line x1=\"60\" y1=\"20\" x2=\"60\" y2=\"440\" stroke=\"#fff\" stroke-width=\"1\" opacity=\".5\"/>\n        <!-- x-axis (time) -->\n        <line x1=\"60\" y1=\"240\" x2=\"980\" y2=\"240\" stroke=\"#fff\" stroke-width=\"1\" opacity=\".5\" stroke-dasharray=\"3 5\"/>\n\n        <!-- axis labels -->\n        <text x=\"60\" y=\"14\" font-family=\"ui-monospace, SFMono-Regular, monospace\" font-size=\"22\" font-weight=\"500\" fill=\"#fff\" opacity=\".75\" letter-spacing=\"3\">VALUE</text>\n        <text x=\"980\" y=\"226\" text-anchor=\"end\" font-family=\"ui-monospace, SFMono-Regular, monospace\" font-size=\"22\" font-weight=\"500\" fill=\"#fff\" opacity=\".75\" letter-spacing=\"3\">TIME →</text>\n        <text x=\"50\" y=\"244\" text-anchor=\"end\" font-family=\"ui-monospace, SFMono-Regular, monospace\" font-size=\"13\" fill=\"#fff\" opacity=\".5\" letter-spacing=\"2\">0</text>\n\n        <!-- the curve · white on cardinal -->\n        <path class=\"jcurve-fresh-path\"\n              d=\"M 80,240 C 200,255 360,420 520,380 C 660,345 800,120 960,30\"\n              fill=\"none\"\n              stroke=\"#fff\"\n              stroke-width=\"3\"\n              stroke-linecap=\"round\"\n              stroke-linejoin=\"round\"\n              stroke-dasharray=\"1600\"\n              stroke-dashoffset=\"1600\"\n              style=\"transition:stroke-dashoffset 2.4s cubic-bezier(.4,0,.2,1) .35s\"/>\n\n        <!-- glow halo · starts at left end, traverses the full curve over 6s, loops -->\n        <circle class=\"jcurve-fresh-light-halo\" cx=\"80\" cy=\"240\" r=\"18\" fill=\"#fff\" opacity=\"0\">\n          <animate attributeName=\"opacity\" from=\"0\" to=\".55\" begin=\"2.6s\" dur=\".4s\" fill=\"freeze\"/>\n          <!-- breathing pulse: radius 18→28→18, 8.4s cycle -->\n          <animate attributeName=\"r\" values=\"18;28;18\" dur=\"8.4s\" begin=\"2.8s\" repeatCount=\"indefinite\" calcMode=\"spline\" keySplines=\"0.4 0 0.2 1;0.4 0 0.2 1\"/>\n          <animate attributeName=\"opacity\" values=\".55;.18;.55\" dur=\"8.4s\" begin=\"2.8s\" repeatCount=\"indefinite\" calcMode=\"spline\" keySplines=\"0.4 0 0.2 1;0.4 0 0.2 1\" additive=\"replace\"/>\n          <!-- traversal: delta motion path matching curve d=\"M 80,240 C 200,255 360,420 520,380 C 660,345 800,120 960,30\" -->\n          <animateMotion dur=\"6s\" begin=\"2.8s\" repeatCount=\"indefinite\"\n            path=\"M 0,0 C 120,15 280,180 440,140 C 580,105 720,-120 880,-210\"/>\n        </circle>\n      </svg>\n    </div>\n\n    <!-- footer -->\n    <div style=\"display:flex;justify-content:space-between;align-items:end;border-top:1px solid rgba(255,255,255,.22);padding-top:1.6vh;margin-top:1vh\">\n      <div class=\"t-meta\" style=\"color:rgba(255,255,255,.6)\">SOURCE · STANFORD ENTERPRISE AI PLAYBOOK · 2026</div>\n    </div>\n  </div>\n</section>", title:'The Productivity J-Curve'});
-
-S.push({type:'indexport', raw:"<section class=\"slide dark\" data-layout=\"SWISS-ICEBERG-IMG\" data-animate=\"iceberg-img\" style=\"background:#0a0a0a!important;position:relative;overflow:hidden\">\n  <!-- background image · absolute fill · sits behind canvas-card content -->\n  <div class=\"iceberg-bg\" style=\"position:absolute;inset:0;z-index:0;background:#0a0a0a\">\n    <img src=\"images/04-iceberg-bg.png\" alt=\"\" style=\"width:100%;height:100%;object-fit:cover;object-position:center center;display:block;opacity:.95\"/>\n    <!-- subtle vignette/contrast overlay so text reads -->\n    <div style=\"position:absolute;inset:0;background:linear-gradient(180deg, rgba(10,10,10,.45) 0%, rgba(10,10,10,.15) 30%, rgba(10,10,10,.20) 65%, rgba(10,10,10,.65) 100%);pointer-events:none\"></div>\n  </div>\n\n  <div class=\"canvas-card\" style=\"background:transparent;color:#fff;position:relative;z-index:1\">\n    <div class=\"chrome-min\" style=\"color:rgba(255,255,255,.7)\">\n      <div class=\"l\"></div>\n      <div class=\"r\"></div>\n    </div>\n\n    <!-- headline (top) -->\n    <div data-anim=\"iceberg-headline\" style=\"display:flex;flex-direction:column;gap:1.4vh;margin-bottom:auto\">\n      <h2 style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(7.2vw,12vh);line-height:1;letter-spacing:-.025em;color:#fff\">\n        <span style=\"color:var(--accent-bright);font-weight:300\">Hardest</span> Challenges that are non-technical\n      </h2>\n    </div>\n\n    <!-- 77% label · centered both axes -->\n    <div data-anim=\"iceberg-77\" style=\"position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;z-index:2;pointer-events:none\">\n      <div style=\"font-family:var(--sans);font-weight:200;font-size:min(22vw,32vh);line-height:.86;letter-spacing:-.05em;color:var(--accent-bright);font-feature-settings:'tnum';text-shadow:0 4px 28px rgba(0,0,0,.55)\">\n        77<span style=\"font-size:.42em;font-weight:300;opacity:.88;vertical-align:.55em;margin-left:.02em\">%</span>\n      </div>\n    </div>\n\n    <!-- footer -->\n    <div style=\"display:flex;justify-content:space-between;align-items:end;border-top:1px solid rgba(255,255,255,.18);padding-top:1.6vh;margin-top:auto;color:rgba(255,255,255,.6)\">\n      <div class=\"t-meta\" style=\"color:rgba(255,255,255,.6)\">SOURCE · STANFORD ENTERPRISE AI PLAYBOOK · 2026</div>\n    </div>\n  </div>\n</section>", title:'Hardest Challenges'});
-
-S.push({type:'indexport', raw:"<section class=\"slide\" data-layout=\"SWISS-THREE-LAYERS\" data-animate=\"layers-stack\" data-stage=\"0\">\n  <div class=\"canvas-card\" style=\"padding:3.5vh 5vw 2.4vh;display:flex;flex-direction:column;gap:0;justify-content:space-between\">\n\n    <!-- TITLE -->\n    <div style=\"margin-bottom:2vh;flex-shrink:0\">\n      <h2 style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(4.8vw,8vh);line-height:1;letter-spacing:-.03em;color:var(--text-primary)\">\n        Enterprise AI Success\n      </h2>\n    </div>\n\n    <!-- LAYOUT ROW: governance bar left + three horizontal bars right -->\n    <div style=\"flex:1;display:flex;flex-direction:row;gap:.6vw;min-height:0;margin-bottom:2vh\">\n\n      <!-- GOVERNANCE — narrow vertical bar, ~10% width, dark grey, text rotated, hidden initially -->\n      <div id=\"gov-bar\" style=\"width:10%;display:flex;align-items:center;justify-content:center;background:var(--grey-3);flex-shrink:0;\n                                opacity:0;transform:translateX(-40px);transition:opacity .55s cubic-bezier(.2,0,.38,.9),transform .55s cubic-bezier(.2,0,.38,.9)\">\n        <span style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(5vw,8.4vh);letter-spacing:.04em;color:rgba(255,255,255,.9);\n                     writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap\">\n          Governance\n        </span>\n      </div>\n\n      <!-- THREE HORIZONTAL BARS — fills remaining 90%; position:relative so .layer-pct can anchor to right edge -->\n      <div class=\"layers-bars\" style=\"flex:1;display:flex;flex-direction:column;gap:.6vh;min-height:0;position:relative\">\n\n        <!-- TOP — Technology (revealed first) -->\n        <div class=\"layer-bar\" data-layer=\"technology\" data-pct-value=\"10\"\n             style=\"flex:1;display:flex;align-items:center;padding:0 3vw;background:var(--grey-1);min-height:0;\n                    width:100%;\n                    opacity:0;transform:translateX(60px);transition:opacity .55s cubic-bezier(.2,0,.38,.9),transform .55s cubic-bezier(.2,0,.38,.9),width .8s cubic-bezier(.2,0,.38,.9)\">\n          <span style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(6.4vw,10.5vh);line-height:1;letter-spacing:-.04em;color:var(--text-secondary)\">\n            Technology\n          </span>\n        </div>\n        <span class=\"layer-pct\" data-pct=\"technology\"\n              style=\"position:absolute;right:0;top:0;height:calc((100% - 1.2vh) / 3);display:flex;align-items:center;padding-right:3vw;font-family:var(--sans);font-weight:200;font-size:min(4.6vw,7.8vh);line-height:1;letter-spacing:-.03em;color:var(--text-helper);\n                     opacity:0;transition:opacity .45s ease .1s;pointer-events:none\">\n          10%\n        </span>\n\n        <!-- MIDDLE — Process (revealed second) -->\n        <div class=\"layer-bar\" data-layer=\"process\" data-pct-value=\"20\"\n             style=\"flex:1;display:flex;align-items:center;padding:0 3vw;background:var(--grey-2);min-height:0;\n                    width:100%;\n                    opacity:0;transform:translateX(60px);transition:opacity .55s cubic-bezier(.2,0,.38,.9),transform .55s cubic-bezier(.2,0,.38,.9),width .8s cubic-bezier(.2,0,.38,.9)\">\n          <span style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(6.4vw,10.5vh);line-height:1;letter-spacing:-.04em;color:var(--ink)\">\n            Process\n          </span>\n        </div>\n        <span class=\"layer-pct\" data-pct=\"process\"\n              style=\"position:absolute;right:0;top:calc((100% - 1.2vh) / 3 + .6vh);height:calc((100% - 1.2vh) / 3);display:flex;align-items:center;padding-right:3vw;font-family:var(--sans);font-weight:200;font-size:min(4.6vw,7.8vh);line-height:1;letter-spacing:-.03em;color:var(--text-helper);\n                     opacity:0;transition:opacity .45s ease .1s;pointer-events:none\">\n          20%\n        </span>\n\n        <!-- BOTTOM — People (revealed third, cardinal red — the dominant factor) -->\n        <div class=\"layer-bar\" data-layer=\"people\" data-pct-value=\"70\"\n             style=\"flex:1;display:flex;align-items:center;padding:0 3vw;background:var(--accent);min-height:0;border-bottom:3px solid var(--ink);\n                    width:100%;\n                    opacity:0;transform:translateX(60px);transition:opacity .55s cubic-bezier(.2,0,.38,.9),transform .55s cubic-bezier(.2,0,.38,.9),width .8s cubic-bezier(.2,0,.38,.9)\">\n          <span style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(6.4vw,10.5vh);line-height:1;letter-spacing:-.04em;color:#fff\">\n            People\n          </span>\n        </div>\n        <span class=\"layer-pct\" data-pct=\"people\"\n              style=\"position:absolute;right:0;bottom:0;height:calc((100% - 1.2vh) / 3);display:flex;align-items:center;padding-right:3vw;font-family:var(--sans);font-weight:200;font-size:min(4.6vw,7.8vh);line-height:1;letter-spacing:-.03em;color:var(--text-helper);\n                     opacity:0;transition:opacity .45s ease .1s;pointer-events:none\">\n          70%\n        </span>\n\n      </div>\n    </div>\n\n    <!-- FOOTER -->\n    <div style=\"display:flex;justify-content:space-between;align-items:end;border-top:1px solid var(--border-subtle);padding-top:1.6vh\">\n      <div class=\"t-meta\">MCKINSEY · BCG · MIT · DELOITTE 2025 · 70 / 20 / 10 INVESTMENT WEIGHT</div>\n    </div>\n\n  </div>\n</section>", title:'Enterprise AI Success'});
-
-S.push({type:'indexport', raw:"<section class=\"slide accent\" data-layout=\"CHANGE-ARC-2\" data-animate=\"pillar-fade\">\n  <div class=\"canvas-card\" style=\"background:var(--accent)\">\n    <div class=\"chrome-min\" style=\"color:rgba(255,255,255,.7)\">\n      <div class=\"l\">Change has a lifecycle &#8212; and a person meets it at three points only</div>\n      <div class=\"r\"></div>\n    </div>\n    <div style=\"flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:1vh 0\">\n      <svg viewBox=\"0 0 690 480\" style=\"max-width:100%;max-height:100%\" xmlns=\"http://www.w3.org/2000/svg\">\n        <style>\n          .a2-arc{stroke-dasharray:500;stroke-dashoffset:500;animation:a2-draw 1.4s cubic-bezier(.4,0,.2,1) .1s forwards}\n          .a2-da{opacity:0;animation:a2-fi .3s ease .1s forwards}\n          .a2-dk{opacity:0;animation:a2-fi .3s ease .8s forwards}\n          .a2-dt{opacity:0;animation:a2-fi .3s ease 1.45s forwards}\n          .a2-la{opacity:0;animation:a2-fi .35s ease .15s forwards}\n          .a2-lk{opacity:0;animation:a2-fi .35s ease .85s forwards}\n          .a2-lt{opacity:0;animation:a2-fi .35s ease 1.5s forwards}\n          .a2-sa{opacity:0;animation:a2-fd .35s ease .25s forwards}\n          .a2-sk{opacity:0;animation:a2-fd .35s ease .95s forwards}\n          .a2-st{opacity:0;animation:a2-fd .35s ease 1.6s forwards}\n          .a2-si{opacity:0;animation:a2-fi .5s ease 1.9s forwards}\n          @keyframes a2-draw{to{stroke-dashoffset:0}}\n          @keyframes a2-fi{to{opacity:1}}\n          @keyframes a2-fd{to{opacity:.5}}\n        </style>\n        <rect y=\"370\" width=\"690\" height=\"110\" fill=\"rgba(0,0,0,.2)\"/>\n        <line x1=\"48\" y1=\"370\" x2=\"642\" y2=\"370\" stroke=\"#f1ece2\" stroke-opacity=\"0.18\" stroke-width=\"1\"/>\n        <path class=\"a2-arc\" d=\"M120 190 Q340 80 560 190\"\n              fill=\"none\" stroke=\"#f1ece2\" stroke-opacity=\"0.5\" stroke-width=\"2\"/>\n        <circle class=\"a2-da\" cx=\"120\" cy=\"190\" r=\"7\" fill=\"#f1ece2\"/>\n        <circle class=\"a2-dk\" cx=\"340\" cy=\"132\" r=\"7\" fill=\"#f1ece2\"/>\n        <circle class=\"a2-dt\" cx=\"560\" cy=\"190\" r=\"7\" fill=\"#f1ece2\"/>\n        <text class=\"a2-la\" x=\"120\" y=\"278\" text-anchor=\"middle\"\n              style=\"font-family:var(--sans);font-weight:200;font-size:52px;letter-spacing:-.03em;fill:#f1ece2\">Agency</text>\n        <text class=\"a2-lk\" x=\"340\" y=\"278\" text-anchor=\"middle\"\n              style=\"font-family:var(--sans);font-weight:200;font-size:52px;letter-spacing:-.03em;fill:#f1ece2\">Knowledge</text>\n        <text class=\"a2-lt\" x=\"560\" y=\"278\" text-anchor=\"middle\"\n              style=\"font-family:var(--sans);font-weight:200;font-size:52px;letter-spacing:-.03em;fill:#f1ece2\">Trust</text>\n        <text class=\"a2-sa\" x=\"120\" y=\"332\" text-anchor=\"middle\"\n              style=\"font-family:var(--sans);font-weight:300;font-size:18px;fill:#f1ece2\">Was I in the room?</text>\n        <text class=\"a2-sk\" x=\"340\" y=\"332\" text-anchor=\"middle\"\n              style=\"font-family:var(--sans);font-weight:300;font-size:18px;fill:#f1ece2\">Do I understand it?</text>\n        <text class=\"a2-st\" x=\"560\" y=\"332\" text-anchor=\"middle\"\n              style=\"font-family:var(--sans);font-weight:300;font-size:18px;fill:#f1ece2\">Does it deliver?</text>\n        <g class=\"a2-si\">\n          <text x=\"340\" y=\"413\" text-anchor=\"middle\"\n                style=\"font-family:var(--sans);font-weight:300;font-size:15px;fill:#f1ece2;opacity:.5\">If none of the above —</text>\n          <text x=\"340\" y=\"465\" text-anchor=\"middle\"\n                style=\"font-family:var(--sans);font-weight:200;font-size:52px;font-style:italic;letter-spacing:-.03em;fill:#f1ece2\">Self-Interest</text>\n        </g>\n      </svg>\n    </div>\n    <div style=\"display:flex;justify-content:flex-end;border-top:1px solid rgba(255,255,255,.22);padding-top:1.6vh\">\n      \n    </div>\n  </div>\n</section>", title:'Change Has a Lifecycle'});
-
-S.push({type:'indexport', raw:"<section class=\"slide accent\" data-layout=\"SWISS-ACCELERATE-3\" data-animate=\"pillar-fade\">\n  <div class=\"canvas-card\" style=\"background:var(--accent)\">\n    <div class=\"chrome-min\" style=\"color:rgba(255,255,255,.62)\">\n      <div class=\"l\">Crossing the valley of death</div>\n      <div class=\"r\"></div>\n    </div>\n\n    <div style=\"display:flex;flex-direction:column;gap:1.2vh;margin-bottom:2.6vh\">\n      <h2 style=\"font-family:var(--sans),var(--sans-zh);font-weight:200;font-size:min(4.6vw,7.6vh);line-height:1;letter-spacing:-.03em;color:#fff\">\n        Factors that accelerate time to value\n      </h2>\n    </div>\n\n    <div style=\"flex:1;display:flex;gap:4vw;min-height:0;align-items:center\">\n\n      <div style=\"flex:1;display:flex;align-items:center;justify-content:center;min-height:0;height:100%\">\n        <svg viewBox=\"0 0 520 380\" preserveAspectRatio=\"xMidYMid meet\"\n             style=\"width:100%;height:100%;display:block;overflow:visible\" aria-hidden=\"true\">\n          <line x1=\"40\" y1=\"20\" x2=\"40\" y2=\"330\" stroke=\"#fff\" stroke-opacity=\".4\" stroke-width=\"1\"/>\n          <line x1=\"40\" y1=\"200\" x2=\"470\" y2=\"200\" stroke=\"#fff\" stroke-opacity=\".4\" stroke-width=\"1\" stroke-dasharray=\"3 5\"/>\n          <text x=\"40\" y=\"12\" font-family=\"ui-monospace,monospace\" font-size=\"13\" fill=\"#fff\" fill-opacity=\".6\" letter-spacing=\"2\">VALUE</text>\n          <text x=\"470\" y=\"192\" text-anchor=\"end\" font-family=\"ui-monospace,monospace\" font-size=\"13\" fill=\"#fff\" fill-opacity=\".6\" letter-spacing=\"2\">TIME →</text>\n          <path d=\"M 60,185 C 120,203 180,315 245,305 C 336,290 381,90 460,32\"\n                fill=\"none\" stroke=\"#fff\" stroke-width=\"3\" stroke-linecap=\"round\"/>\n        </svg>\n      </div>\n\n      <div style=\"flex:1.1;display:flex;flex-direction:column;justify-content:center;gap:4.6vh\">\n        <div style=\"font-family:var(--sans),var(--sans-zh);font-weight:300;font-size:min(3vw,5vh);line-height:1;letter-spacing:-.02em;color:#fff\">Executive sponsorship</div>\n        <div style=\"font-family:var(--sans),var(--sans-zh);font-weight:300;font-size:min(3vw,5vh);line-height:1;letter-spacing:-.02em;color:#fff\">Build on an existing foundation</div>\n        <div style=\"font-family:var(--sans),var(--sans-zh);font-weight:300;font-size:min(3vw,5vh);line-height:1;letter-spacing:-.02em;color:#fff\">End-user willingness</div>\n      </div>\n\n    </div>\n\n    <div style=\"display:flex;justify-content:flex-end;align-items:end;border-top:1px solid rgba(255,255,255,.22);padding-top:1.6vh;margin-top:1vh\">\n      \n    </div>\n  </div>\n</section>", title:'Crossing the Valley of Death'});
-
-/* 9 — Section marker between the recap and the role play */
-S.push({type:'toc', tone:'light', eyebrow:'Tonight’s Agenda',
-  head:'Three Parts to Tonight',
-  items:TOC_ITEMS,
-  active:1,
-  foot:'Enterprise AI in Practice · Session Two'
-});
-
-/* ---- Shadow AI role play ---- */
-/* No standalone role-play cover slide: a title page for only one of
-   three sections was inconsistent with Recap and Skills Demo, which
-   don't get one either. The Scenario slide picks up right after the TOC. */
-
-S.push({type:'scenario', tone:'light', eyebrow:'The Scenario',
-  head:'An internal review found wide, unregulated AI use across the company.',
-  roles:[
-    ['Ray Han','IT Director','Presents each case'],
-    ['Lewis Ho','Counsel','Frames the options'],
-    ['Arman Tan','Chief Executive','Makes the call']
-  ]
-});
-
-S.push({type:'list4', tone:'accent', eyebrow:'What Ray Found',
-  head:'Four Case Studies',
-  items:[
-    ['01','Regulated Professional Work'],
-    ['02','Engineering Pipelines'],
-    ['03','Marketing and Communications'],
-    ['04','Agentic Workflows']
-  ]
-});
-
-S.push({type:'stakes', tone:'light', eyebrow:"What's at Stake",
-  head:'This Is Not Only a Technology Question',
-  cols:[
-    ['Financial penalty','S$1 million, or 10% of turnover'],
-    ['Breach notification','Three days, 500 people'],
-    ['Personal liability','Directors, criminal penalties'],
-    ['Disqualification','Up to five years']
-  ],
-  callout:'Penalties attach to negligence — a documented decision is the defense.',
-  source:'SOURCE · SINGAPORE PERSONAL DATA PROTECTION ACT · COMPANIES ACT S.157(1)'
-});
-
-/* 'flow' sits here (before the two "Method" slides, not after) so that
-   stakes/riskimage/grid -- three light-toned slides in a row -- don't
-   run together: neither of the Method slides can take an accent
-   treatment without a larger redesign (both rely on var(--accent) text
-   and tier-color cells that assume a light background), so the one
-   available lever is reordering this already-accent slide between them.
-   riskimage and grid (both "The Method") stay adjacent to each other. */
-S.push({type:'flow', tone:'accent', eyebrow:'How Tonight Runs', head:'Every Case, the Same Shape',
-  steps:[['The Case',false],['Risk Read',false],['Options → Recommendation',true]]
-});
-
-/* Risk tiers — Lewis Ho's published framework graphic replaces the built
-   tier ladder entirely. Two deliberate exceptions here, not to be "fixed":
-   the graphic's own green/blue/orange/red tier coding (Lewis's IP, shown
-   unaltered) and its density (he talks the room through it). */
-S.push({type:'riskimage', tone:'light', eyebrow:'The Method',
-  src:'images/lewis-risk-tiers.png',
-  alt:'A four-tier AI risk framework for enterprises — Limited-Risk, Controlled-Risk, High-Risk, and Critical or Prohibited AI, by Lewis Ho, LexGuard AI.',
-  foot:'Lewis Ho · LexGuard AI · Modern AI Governance Framework'
-});
-
-S.push({type:'grid', tone:'light', eyebrow:'The Method', head:'Case Risk Assessment',
-  tierHeaders:['Limited-Risk AI','Controlled-Risk AI','High-Risk AI','Critical or Prohibited AI'],
-  rows:[
-    ['Data','what goes in',['non-sensitive','internal / confidential','personal / customer','regulated / patient / special']],
-    ['Consequence','if it\'s wrong',['trivial','affects a process, correctable','materially affects a person or a regulated decision','determines someone\'s outcome, or at scale']],
-    ['Autonomy','what it does alone',['drafts only','suggests, a human approves each','acts within limits, a human can step in','acts on its own, hard to undo']]
-  ],
-  rule:'*You don\'t average -- one high box is enough.*'
-});
-
-/* ---- Case builder ---- */
-function addCase(n,name,c){
-  S.push({type:'case', tone:'accent', tag:`Case ${n} · ${name} · Ray`,
-    eyebrow:c.a.eyebrow, title:c.a.title, description:c.a.description,
-    why:c.a.why, scale:c.a.scale, riskDim:c.a.riskDim, riskText:c.a.riskText,
-    quote:c.a.quote});
-  S.push({type:'riskread', tone:'light', tag:`Case ${n} · Risk Read`,
-    dims:c.b.dims, assessment:c.b.assessment});
-  S.push({type:'options', tone:'light', tag:`Case ${n} · Options`, head:c.c.head, options:c.c.options,
-    recLetter:c.c.recLetter, reasoning:c.c.reasoning});
+/* ---- fixed 1280x720 design canvas, scaled to fit any real viewport.
+   The iframe's own internal document treats its box as a genuine 1280x720
+   viewport -- vw/vh inside it (used throughout every slide, including the
+   seven ported June slides we cannot edit) resolve against that fixed
+   size, not the real device. This CSS transform then scales the whole
+   rendered result to fit the actual screen, recomputed on resize and
+   orientation change. */
+function applyScale(){
+  const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+  frame.style.transform = 'scale(' + scale + ')';
 }
+applyScale();
+window.addEventListener('resize', applyScale);
+window.addEventListener('orientationchange', applyScale);
 
-addCase(1,'Regulated Professional Work',{
-  a:{eyebrow:'CASE ONE', title:'Regulated Professional Work',
-     description:'Client and patient work drafted on consumer AI tools.',
-     why:'<b>No approved tool existed</b> for this work.', scale:'Scale: [N people / teams]',
-     riskDim:'Consequence', riskText:'may materially affect individuals, regulated decisions, and legal rights.',
-     quote:'This is the work we\'re most answerable for.'},
-  b:{dims:[
-      {label:'Data',tier:3,desc:'Regulated personal and patient records.'},
-      {label:'Consequence',tier:4,desc:'A wrong output decides a person\'s clinical or financial outcome'},
-      {label:'Autonomy',tier:2,desc:'Reviewed before release, though not required.'}
-     ], assessment:'High-Risk overall, set by consequence. The clinical and advice work reaches Critical on its own.'},
-  c:{head:'Staff are drafting client and patient work with consumer tools.',
-     options:[
-      {letter:'A',title:'Block All Use',desc:'No approved tool, no use.'},
-      {letter:'B',title:'Named Reviewer Sign-Off',desc:'The responsible professional signs every output.'},
-      {letter:'C',title:'Two-Stage Review and Sign-Off',desc:'Trained reviewer checks, professional signs.'}
-     ],
-     recLetter:'C', reasoning:'A named professional\'s sign-off is what closes this — applied at volume.'}
+/* Keyboard nav should work immediately (e.g. a presenter clicker) without
+   requiring an initial tap/click to focus the iframe first. */
+frame.addEventListener('load', () => { frame.contentWindow.focus(); });
+
+/* Fallback: if focus ever lands on the outer shell instead of the iframe
+   (e.g. a click on the letterboxed background), forward the keydown into
+   the deck's own document so its existing handler processes it. When the
+   iframe already has focus, keydown fires there directly and this never
+   runs -- no double-handling. */
+window.addEventListener('keydown', (e) => {
+  const innerWin = frame.contentWindow;
+  if(!innerWin) return;
+  innerWin.document.dispatchEvent(new innerWin.KeyboardEvent('keydown', {key: e.key, bubbles:true}));
 });
 
-addCase(2,'Engineering Pipelines',{
-  a:{eyebrow:'CASE TWO', title:'Engineering Pipelines',
-     description:'Engineers wired outside AI tools into build pipelines, on their own keys.',
-     why:'<b>speed</b>.', scale:'Scale: [N repositories / keys]',
-     riskDim:'Autonomy', riskText:'a system with limited human review affecting significant business outcomes.',
-     quote:'No approved way to do it, so people built their own.'},
-  b:{dims:[
-      {label:'Data',tier:2,desc:'Proprietary source code, credentials nobody controls.'},
-      {label:'Consequence',tier:2,desc:'Usually caught before customers see it.'},
-      {label:'Autonomy',tier:3,desc:'Tools can ship code to customers with no human checkpoint'}
-     ], assessment:'High-Risk, set by autonomy alone. Data on its own would suggest far less.'},
-  c:{head:'Engineers connected outside artificial intelligence tools directly into the systems that ship our product.',
-     options:[
-      {letter:'A',title:'Centralized Connection Gateway',desc:'Every outside connection through one controlled point.'},
-      {letter:'B',title:'Phased Rollout With a Review Checkpoint',desc:'One team first, checkpoint before shipping.'},
-      {letter:'C',title:'Monitor and Tag Retroactively',desc:'Tag AI-generated code, review later.'}
-     ],
-     recLetter:'B', reasoning:'Visibility and tagging show what happened. Only a checkpoint stops it.'}
+/* ---- portrait hint: show once per session on narrow portrait screens.
+   sessionStorage can throw (private browsing in some browsers, storage
+   disabled, opaque-origin contexts like a local file:// open) -- fall
+   back to an in-memory flag so the hint still behaves correctly for the
+   current page load even when storage isn't available. */
+let portraitHintDismissedFallback = false;
+function isPortraitHintDismissed(){
+  try{ return !!sessionStorage.getItem('portraitHintDismissed'); }
+  catch(e){ return portraitHintDismissedFallback; }
+}
+function markPortraitHintDismissed(){
+  portraitHintDismissedFallback = true;
+  try{ sessionStorage.setItem('portraitHintDismissed', '1'); }catch(e){}
+}
+function checkPortraitHint(){
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const isNarrow = window.innerWidth <= 820;
+  portraitHint.classList.toggle('show', isPortrait && isNarrow && !isPortraitHintDismissed());
+}
+document.getElementById('portraitHintDismiss').addEventListener('click', () => {
+  markPortraitHintDismissed();
+  portraitHint.classList.remove('show');
 });
+window.addEventListener('resize', checkPortraitHint);
+window.addEventListener('orientationchange', checkPortraitHint);
+checkPortraitHint();
 
-addCase(3,'Marketing & Communications',{
-  a:{eyebrow:'CASE THREE', title:'Marketing and Communications',
-     description:'Campaigns drafted on outside frontier tools instead of the approved one.',
-     why:'<b>the approved tool was weaker</b>.', scale:'Scale: [N people / tools]',
-     riskDim:'Data', riskText:'customer information affecting business processes and outputs, held without vendor data terms.',
-     quote:'Not people going around a rule. Around a worse tool.'},
-  b:{dims:[
-      {label:'Data',tier:2,desc:'Brand and customer information in a tool with no data terms'},
-      {label:'Consequence',tier:1,desc:'A poor post that gets corrected.'},
-      {label:'Autonomy',tier:1,desc:'Brand and legal review before publication.'}
-     ], assessment:'Controlled-Risk, set by data. The lightest case tonight.'},
-  c:{head:'Marketing left the official tool for a better one outside.',
-     options:[
-      {letter:'A',title:'Formalize the Tool Already in Use',desc:'Put it on a proper contract.'},
-      {letter:'B',title:'Upgrade Our Platform to Frontier-Model Capability',desc:'License a frontier model into ours.'},
-      {letter:'C',title:'Monitor Before Deciding',desc:'Track usage before committing to a fix.'}
-     ],
-     recLetter:'B', reasoning:'People left for a better tool. The fix is a better tool.'}
-});
-
-addCase(4,'Agentic Workflows',{
-  a:{eyebrow:'CASE FOUR', title:'Agentic Workflows',
-     description:'Autonomous software on company devices, acting with device credentials.',
-     why:'<b>no approval path existed</b>.', scale:'Scale: [N devices / agents]',
-     riskDim:'Autonomy', riskText:'highly consequential action taken without human accountability.',
-     quote:'The others are about data leaving. This one is about software acting.'},
-  b:{dims:[
-      {label:'Data',tier:1,desc:'Little sensitivity in what it touches.'},
-      {label:'Consequence',tier:2,desc:'Disrupts an internal process, not customers.'},
-      {label:'Autonomy',tier:4,desc:'Acts without approval, on device credentials, and is hard to reverse'}
-     ], assessment:'Critical, set by autonomy alone. Low data sensitivity misleads here.'},
-  c:{head:'An agent runs routine internal work with no sensitive data.',
-     options:[
-      {letter:'A',title:'Build an Inventory First',desc:'What\'s deployed, what it accesses, who owns.'},
-      {letter:'B',title:'Apply Containment Controls',desc:'Isolated, least privilege, approval, kill switch.'},
-      {letter:'C',title:'Suspend All Use, Pending Review',desc:'Block company-wide until a path exists.'}
-     ],
-     recLetter:'C', reasoning:'Low sensitivity, no owner, high reach — the combination that looks safe and isn\'t.'}
-});
-
-/* Close */
-S.push({type:'close', tone:'accent', eyebrow:'Close', head:'A Practical, Systematic Way to Address Shadow AI',
-  body:'The same three questions produced four different defensible answers. The tier decided, not preference.',
-  body2:'Tonight\'s risk reads and recommendations are the documented record.'
-});
-
-/* 29 — Table of contents (final appearance — highlights Skills Demo, the
-   handoff into the third part of the evening) */
-S.push({type:'toc', tone:'light', eyebrow:'Tonight’s Agenda',
-  head:'Three Parts to Tonight',
-  items:TOC_ITEMS,
-  active:2,
-  foot:'Enterprise AI in Practice · Session Two'
-});
-/* ============ RENDER ============ */
-function em(t){return (t||'').replace(/\*(.+?)\*/g,'<span class="em">$1</span>');}
-
-function tierClass(n){return 'on'+n;}
-
-function render(s,i){
-  /* 'indexport' slides are verbatim <section> markup lifted from index.html —
-     parse the raw HTML directly rather than building it through the
-     className/innerHTML path the native slide types use below. Untouched
-     by the design pass. */
-  if(s.type==='indexport'){
-    const tmp = document.createElement('div');
-    tmp.innerHTML = s.raw.trim();
-    const el = tmp.firstElementChild;
-    el.classList.add('index-port');
-    el.dataset.index = i;
-    el.dataset.title = s.title;
-    return el;
-  }
-
-  const el = document.createElement('section');
-  el.className = 'slide ' + (s.tone === 'accent' ? 'accent' : s.tone === 'dark' ? 'dark' : 'light');
-  el.dataset.index = i;
-  let title = '';
-  let html = '';
-
-  if(s.type==='cover-intro'){
-    title = 'Welcome';
-    html = `<div class="cover-top">${s.eyebrow}</div>
-    <div class="cover-intro-headline">${em(s.headline)}</div>
-    <div class="cover-sub">${s.sub}</div>
-    <div class="cover-meta">
-      <div class="cm-when">${s.when}</div>
-      <div class="cm-where">${s.where}</div>
-    </div>`;
-    el.dataset.footRight = '→ Arrow keys · Esc for index';
-  }
-
-  if(s.type==='toc'){
-    title = 'Table of Contents';
-    html = `<div class="eyebrow">${s.eyebrow}</div>
-    <div class="content">
-      <div class="statement-head">${s.head}</div>
-      <div class="list4">
-        ${s.items.map((it,idx)=>`<div class="list4-row ${idx===s.active?'active':''}"><div class="list4-num">${it[0]}</div><div><div class="list4-title">${it[1]}</div><div class="list4-sub">${it[2]}</div></div></div>`).join('')}
-      </div>
-    </div>`;
-  }
-
-  if(s.type==='scenario'){
-    title = 'The Scenario & Roles';
-    html = `<div class="eyebrow">${s.eyebrow}</div>
-    <div class="content">
-      <div class="statement-head">${em(s.head)}</div>
-      <div class="roles-table">
-        ${s.roles.map(r=>`<div class="role-row"><div class="role-name">${r[0]}</div><div class="role-title">${r[1]}</div><div class="role-desc">${r[2]}</div></div>`).join('')}
-      </div>
-    </div>`;
-    el.dataset.footLeft = 'Enterprise AI in Practice · 30 July 2026';
-  }
-
-  if(s.type==='list4'){
-    title = s.head;
-    html = `<div class="eyebrow">${s.eyebrow}</div>
-    <div class="content">
-      <div class="statement-head">${em(s.head)}</div>
-      <div class="list4">
-        ${s.items.map(it=>`<div class="list4-row"><div class="list4-num">${it[0]}</div><div><div class="list4-title">${it[1]}</div></div></div>`).join('')}
-      </div>
-    </div>`;
-    el.dataset.footLeft = 'Ray Han · IT Director';
-  }
-
-  if(s.type==='stakes'){
-    title = s.head;
-    html = `<div class="eyebrow">${s.eyebrow}</div>
-    <div class="content">
-      <div class="statement-head">${s.head}</div>
-      <div class="stakes-cols">
-        ${s.cols.map(c=>`<div class="stakes-item"><div class="stakes-kicker">${c[0]}</div><div class="stakes-detail">${c[1]}</div></div>`).join('')}
-      </div>
-      <div class="stakes-callout">${s.callout}</div>
-    </div>`;
-    el.dataset.footLeft = s.source;
-  }
-
-  if(s.type==='riskimage'){
-    title = 'The Four Risk Tiers';
-    html = `<div class="eyebrow">${s.eyebrow}</div>
-    <div class="risk-image-wrap"><img src="${s.src}" alt="${s.alt}" class="risk-image"/></div>`;
-    el.dataset.footLeft = s.foot;
-  }
-
-  if(s.type==='grid'){
-    title = s.head;
-    let gt = `<div class="gcell head"></div>` + s.tierHeaders.map(t=>`<div class="gcell head">${t}</div>`).join('');
-    s.rows.forEach(r=>{
-      gt += `<div class="gcell dim">${r[0]}<br><span style="font-weight:400;color:var(--text-helper);font-size:14px">${r[1]}</span></div>`;
-      r[2].forEach((c,ci)=>{ gt += `<div class="gcell t${ci+1}">${c}</div>`; });
-    });
-    html = `<div class="eyebrow">${s.eyebrow}</div>
-    <div class="content">
-      <div class="statement-head">${s.head}</div>
-      <div class="gridtable">${gt}</div>
-      <div class="grid-notes">
-        <div class="rule">${em(s.rule)}</div>
-      </div>
-    </div>`;
-    el.dataset.footLeft = 'Checked against Lewis\'s published framework, lexguard-ai.com';
-  }
-
-  if(s.type==='flow'){
-    title = s.head;
-    html = `<div class="eyebrow">${s.eyebrow}</div>
-    <div class="content">
-      <div class="statement-head">${s.head}</div>
-      <div class="flow">
-        ${s.steps.map((st,idx)=>(idx>0?`<div class="flow-arrow">→</div>`:'')+`<div class="flow-step ${st[1]?'hi':''}">${st[0]}</div>`).join('')}
-      </div>
-    </div>`;
-    el.dataset.footLeft = 'Every case follows this same shape';
-  }
-
-  if(s.type==='case'){
-    title = s.tag;
-    html = `<div class="case-tag">${s.eyebrow}</div>
-    <div class="content">
-      <div class="case-title">${s.title}</div>
-      <div class="case-desc">${s.description}</div>
-      <div class="case-why">${s.why}</div>
-      <div class="case-scale">${s.scale}</div>
-      <div class="case-risk">
-        <div class="case-risk-label">Key Risk Exposure</div>
-        <div class="case-risk-text"><b>${s.riskDim}</b> — ${s.riskText}</div>
-      </div>
-      <div class="case-quote">"${s.quote}"<span>Ray Han</span></div>
-    </div>`;
-    el.dataset.footLeft = 'The Case';
-  }
-
-  if(s.type==='riskread'){
-    title = s.tag;
-    const maxTier = Math.max(...s.dims.map(x=>x.tier));
-    const dimsHtml = s.dims.map(d=>{
-      let cells='';
-      for(let t=1;t<=4;t++){ cells += `<div class="dim-cell ${t===d.tier?tierClass(t):''}"></div>`; }
-      return `<div class="dim-row ${d.tier===maxTier?'dominant':''}">
-        <div class="dim-label">${d.label}</div>
-        <div><div class="dim-bar">${cells}</div></div>
-        <div class="dim-desc">${d.desc}</div>
-      </div>`;
-    }).join('');
-    html = `<div class="case-tag" style="color:var(--text-helper)">${s.tag}</div>
-    <div class="content">
-      <div class="head-secondary" style="color:var(--ink)">Risk Read</div>
-      <div class="dims">${dimsHtml}</div>
-      <div class="riskread-assessment">${s.assessment}</div>
-    </div>`;
-    el.dataset.footLeft = 'Arman drives · Ray & Lewis rate';
-  }
-
-  if(s.type==='options'){
-    title = s.tag;
-    html = `<div class="case-tag" style="color:var(--text-helper)">${s.tag}</div>
-    <div class="content">
-      <div class="options-head">${s.head}</div>
-      <div class="cards3">
-        ${s.options.map(o=>`<div class="card" data-letter="${o.letter}">
-          <div class="card-letter">Option ${o.letter}</div>
-          <div class="card-title">${o.title}</div>
-          <div class="card-desc">${o.desc}</div>
-        </div>`).join('')}
-      </div>
-      <div class="options-reasoning">${s.reasoning}</div>
-    </div>`;
-    el.dataset.footLeft = 'Lewis lays out the options · room votes';
-    el.dataset.recLetter = s.recLetter;
-  }
-
-  if(s.type==='close'){
-    title = s.head;
-    html = `<div class="eyebrow">${s.eyebrow}</div>
-    <div class="content">
-      <div class="case-title" style="max-width:24ch">${s.head}</div>
-      <div class="body-copy" style="color:rgba(255,255,255,.85);max-width:62ch">${s.body}</div>
-      <div class="body-copy" style="color:rgba(255,255,255,.85);max-width:62ch;margin-top:2px">${s.body2}</div>
-    </div>`;
-    el.dataset.footLeft = 'Board Briefing · Shadow Artificial Intelligence';
-  }
-
-  el.innerHTML = html;
-  el.dataset.title = title;
-  if(s.foot) el.dataset.footLeft = s.foot;
-  return el;
-}
-
-/* Native options-slide two-click reveal: click 1 shows three neutral
-   cards (already rendered); click 2 highlights the recommended card and
-   fades in the reasoning line. Uses the same window.__pipeAdvance
-   mechanism the ported layers-stack slide (Enterprise AI Success) uses —
-   not a new staging system. */
-function optionsReveal(slide){
-  const letter = slide.dataset.recLetter;
-  const card = slide.querySelector('.card[data-letter="'+letter+'"]');
-  const reasoning = slide.querySelector('.options-reasoning');
-  if(card) card.classList.remove('recommended');
-  if(reasoning) reasoning.classList.remove('show');
-  let stage = 0;
-
-  window.__pipeAdvance = function(){
-    if(stage === 0){
-      if(card) card.classList.add('recommended');
-      if(reasoning) reasoning.classList.add('show');
-      stage++;
-      return true;
-    }
-    window.__pipeAdvance = null;
-    return false;
-  };
-}
-
-/* ============ INDEX.HTML PORT · ANIMATION RECIPES ============
-   Ported as-is from index.html's recipe functions (rHook95, rJCurveFresh,
-   rIcebergImg, rPillarFade, rLayersStack), adapted only to read from
-   window.__ipMotionFn instead of the module-scoped 'animate' those
-   recipes closed over in index.html. Dispatched from go() below, the
-   same way index.html's playSlide() dispatches on data-animate. */
-const IP_EASE_ENTRY_EXP = [0, 0, .3, 1];
-
-function ipMotionAnimate(el, keyframes, opts){
-  if(window.__ipMotionFn){ window.__ipMotionFn(el, keyframes, opts); return; }
-  if(keyframes.opacity) el.style.opacity = keyframes.opacity[keyframes.opacity.length-1];
-  if(keyframes.transform) el.style.transform = keyframes.transform[keyframes.transform.length-1];
-}
-
-function ipHook95(slide){
-  const num = slide.querySelector('[data-anim="hook-num"]');
-  if(num){num.style.opacity='0';num.style.transform='translateY(20px)';}
-  if(num){
-    ipMotionAnimate(num, {opacity:[0,1], transform:['translateY(20px)','translateY(0)']},
-      {duration:.85, delay:.25, easing:IP_EASE_ENTRY_EXP});
-  }
-}
-
-function ipJCurveFresh(slide){
-  const headline = slide.querySelector('[data-anim="jcurve-headline"]');
-  const path = slide.querySelector('.jcurve-fresh-path');
-  if(headline){headline.style.opacity='0';headline.style.transform='translateY(14px)';}
-  if(path){path.style.strokeDashoffset='1700';}
-  if(headline){
-    ipMotionAnimate(headline, {opacity:[0,1], transform:['translateY(14px)','translateY(0)']},
-      {duration:.7, delay:.15, easing:IP_EASE_ENTRY_EXP});
-  }
-  requestAnimationFrame(()=>{ if(path) path.style.strokeDashoffset = '0'; });
-}
-
-function ipIcebergImg(slide){
-  const headline = slide.querySelector('[data-anim="iceberg-headline"]');
-  const label23 = slide.querySelector('[data-anim="iceberg-23"]');
-  const label77 = slide.querySelector('[data-anim="iceberg-77"]');
-  if(headline){headline.style.opacity='0';headline.style.transform='translateY(14px)';}
-  if(label23){label23.style.opacity='0';label23.style.transform='translateX(-14px)';}
-  if(label77){label77.style.opacity='0';label77.style.transform='translateY(20px)';}
-  if(headline){
-    ipMotionAnimate(headline, {opacity:[0,1], transform:['translateY(14px)','translateY(0)']},
-      {duration:.7, delay:.15, easing:IP_EASE_ENTRY_EXP});
-  }
-  if(label23){
-    ipMotionAnimate(label23, {opacity:[0,1], transform:['translateX(-14px)','translateX(0)']},
-      {duration:.6, delay:.85, easing:IP_EASE_ENTRY_EXP});
-  }
-  if(label77){
-    ipMotionAnimate(label77, {opacity:[0,1], transform:['translateY(20px)','translateY(0)']},
-      {duration:.85, delay:1.30, easing:IP_EASE_ENTRY_EXP});
-  }
-}
-
-function ipPillarFade(slide){
-  const children = [...slide.querySelectorAll('.canvas-card > *')];
-  children.forEach((el,i)=>{
-    el.style.opacity = '0';
-    el.style.transform = 'translateY(12px)';
-    ipMotionAnimate(el, {opacity:[0,1], transform:['translateY(12px)','translateY(0)']},
-      {duration:.65, delay:.15 + i*.1, easing:IP_EASE_ENTRY_EXP});
-  });
-}
-
-function ipLayersStack(slide){
-  const bars = [...slide.querySelectorAll('.layer-bar')];
-  const pcts = [...slide.querySelectorAll('.layer-pct')];
-  const govBar = slide.querySelector('#gov-bar');
-  let stage = 0;
-
-  bars.forEach(b => { b.style.opacity = '0'; b.style.transform = 'translateX(60px)'; b.style.width = '100%'; });
-  pcts.forEach(p => { p.style.opacity = '0'; });
-  if(govBar){ govBar.style.opacity = '0'; govBar.style.transform = 'translateX(-40px)'; }
-
-  window.__pipeAdvance = function(){
-    if(stage < 3){
-      const bar = bars[stage];
-      bar.style.opacity = '1';
-      bar.style.transform = 'translateX(0)';
-      stage++;
-      return true;
-    } else if(stage === 3){
-      if(govBar){ govBar.style.opacity = '1'; govBar.style.transform = 'translateX(0)'; }
-      stage++;
-      return true;
-    } else if(stage === 4){
-      bars.forEach((b,i) => {
-        const pct = b.dataset.pctValue || '100';
-        b.style.width = pct + '%';
-        if(pcts[i]) pcts[i].style.opacity = '1';
-      });
-      stage++;
-      return true;
-    }
-    window.__pipeAdvance = null;
-    return false;
-  };
-}
-
-const IP_RECIPES = {
-  'hook-95': ipHook95,
-  'jcurve-fresh': ipJCurveFresh,
-  'iceberg-img': ipIcebergImg,
-  'pillar-fade': ipPillarFade,
-  'layers-stack': ipLayersStack
+/* ---- pinch-zoom exception: the risk-tiers image slide (index 14, "The
+   Four Risk Tiers") is dense at 2048x1117 source resolution and stays
+   hard to read even at the landscape-phone display size. Pinch-zoom is
+   disabled everywhere else so it doesn't fire accidentally during swipe
+   navigation. The deck notifies this via window.__onDeckSlideChange
+   (added to its go() function) rather than polling. */
+const RISK_IMAGE_SLIDE_INDEX = 14;
+window.__onDeckSlideChange = function(slideIndex){
+  const allowZoom = slideIndex === RISK_IMAGE_SLIDE_INDEX;
+  viewportMeta.setAttribute('content', allowZoom
+    ? 'width=device-width, initial-scale=1'
+    : 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
 };
-
-/* ============ MOUNT ============ */
-const stage = document.getElementById('stage');
-const dotsWrap = document.getElementById('dots');
-const idxGrid = document.getElementById('idxGrid');
-let current = 0;
-
-S.forEach((s,i)=>{
-  const el = render(s,i);
-  stage.appendChild(el);
-  const dot = document.createElement('div');
-  dot.className='dot';
-  dot.addEventListener('click',()=>go(i));
-  dotsWrap.appendChild(dot);
-  const idxItem = document.createElement('div');
-  idxItem.className='idx-item';
-  idxItem.innerHTML = `<span class="idx-num">${String(i+1).padStart(2,'0')}</span>${el.dataset.title}`;
-  idxItem.addEventListener('click',()=>{go(i);toggleIndex(false);});
-  idxGrid.appendChild(idxItem);
-});
-
-function go(i){
-  if(i<0||i>=S.length) return;
-  document.querySelectorAll('.slide').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.dot').forEach(d=>d.classList.remove('active'));
-  const el = stage.children[i];
-  el.classList.add('active');
-  dotsWrap.children[i].classList.add('active');
-
-  /* ported slides carry their own full-bleed footer chrome (source +
-     original page number) inside the canvas-card — hide this deck's
-     own dots/footer overlay for them rather than stacking two footers. */
-  const isIndexPort = el.classList.contains('index-port');
-  dotsWrap.style.display = isIndexPort ? 'none' : 'flex';
-  document.getElementById('footerBar').style.display = isIndexPort ? 'none' : 'flex';
-
-  document.getElementById('footerLeft').textContent = el.dataset.footLeft || '';
-  document.getElementById('footerRight').textContent = (el.dataset.footRight || (`${String(i+1).padStart(2,'0')} of ${S.length}`));
-  current = i;
-
-  /* dispatch the ported animation recipe, same as index.html's playSlide() */
-  window.__pipeAdvance = null;
-  const fn = IP_RECIPES[el.dataset.animate];
-  if(fn) fn(el);
-
-  /* native options-slide two-click reveal -- same window.__pipeAdvance
-     mechanism as the ported layers-stack recipe above, not a new one. */
-  if(el.dataset.recLetter) optionsReveal(el);
-}
-
-function toggleIndex(force){
-  const ov = document.getElementById('indexOverlay');
-  const show = force!==undefined ? force : !ov.classList.contains('show');
-  ov.classList.toggle('show', show);
-}
-
-document.addEventListener('keydown',(e)=>{
-  if(e.key==='Escape'){ toggleIndex(); return; }
-  if(document.getElementById('indexOverlay').classList.contains('show')) return;
-  if(e.key==='ArrowRight' || e.key===' '){
-    if(window.__pipeAdvance && window.__pipeAdvance()) return;
-    go(current+1);
-    return;
-  }
-  if(e.key==='ArrowLeft') go(current-1);
-});
-
-go(0);
-</script>
-<!-- Motion One 动效引擎 — same local asset index.html uses, same CDN fallback.
-     Ported recipes (ipHook95 etc.) degrade to an instant final-state snap
-     via ipMotionAnimate() if this hasn't resolved yet or fails to load. -->
-<script type="module">
-  import('./assets/motion.min.js')
-    .then(m => { window.__ipMotionFn = m.animate; })
-    .catch(() => {
-      import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm')
-        .then(m => { window.__ipMotionFn = m.animate; })
-        .catch(() => {});
-    });
 </script>
 </body>
 </html>
