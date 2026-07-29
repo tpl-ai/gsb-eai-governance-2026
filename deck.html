@@ -65,6 +65,19 @@
     font-family:var(--mono);font-size:14px;letter-spacing:.06em;color:var(--text-helper);
   }
   .slide.accent .footer, .slide.dark .footer{color:rgba(255,255,255,.7);}
+  /* Ported slides: footerLeft would only duplicate their own .t-meta
+     source-attribution line, so it's hidden here -- visibility:hidden,
+     not display:none, so #footerBar keeps two flex children and
+     justify-content:space-between still pins footerRight (the page
+     number, which stays visible everywhere) to the right edge instead of
+     collapsing back to flex-start. The ported slide's own footer row
+     sits right at its canvas-card's bottom padding (4.4vh of the fixed
+     720px frame = ~32px) with ~20px of 14px/1.45-line-height text above
+     that, so its text center lands ~42px from the bottom -- noticeably
+     higher than this shared footer's default bottom:22px (~30px center).
+     Nudging bottom to 34px brings the two into closer visual alignment. */
+  body.index-port-active #footerLeft{visibility:hidden;}
+  body.index-port-active #footerBar{bottom:34px;}
   .dots{
     position:absolute;left:0;right:0;bottom:44px;display:flex;justify-content:center;
     gap:5px;pointer-events:none;
@@ -289,7 +302,11 @@
     background:rgba(0,0,0,.15);color:var(--text-helper);
     font-family:var(--mono);font-size:15px;line-height:1;cursor:pointer;
   }
-  .slide.accent ~ #indexToggleBtn, .slide.dark ~ #indexToggleBtn{color:rgba(255,255,255,.7);}
+  /* #indexToggleBtn lives outside #stage as a sibling of it, not as a
+     sibling of individual .slide elements nested inside -- a plain CSS
+     sibling combinator off .slide.accent/.slide.dark can never match it.
+     go() mirrors the active slide's own tone onto <body> instead. */
+  body.tone-accent #indexToggleBtn, body.tone-dark #indexToggleBtn{color:rgba(255,255,255,.7);}
 </style>
 </head>
 <body>
@@ -897,12 +914,24 @@ function go(i){
   el.classList.add('active');
   dotsWrap.children[i].classList.add('active');
 
-  /* ported slides carry their own full-bleed footer chrome (source +
-     original page number) inside the canvas-card — hide this deck's
-     own dots/footer overlay for them rather than stacking two footers. */
+  /* ported slides carry their own source-attribution line inside the
+     canvas-card, near the same bottom edge -- hide this deck's own dots
+     (redundant chrome for a full-bleed slide) and the shared footer's
+     LEFT side only (genuinely redundant with that attribution line).
+     footerRight (the page number) stays visible on every slide, these
+     seven included -- it's this deck's own numbering, not June's, and
+     has nothing to duplicate. See body.index-port-active in the CSS for
+     the matching visibility/position rules. */
   const isIndexPort = el.classList.contains('index-port');
   dotsWrap.style.display = isIndexPort ? 'none' : 'flex';
-  document.getElementById('footerBar').style.display = isIndexPort ? 'none' : 'flex';
+  document.body.classList.toggle('index-port-active', isIndexPort);
+
+  /* mirror the active slide's own tone onto <body> -- #indexToggleBtn
+     (and anything else outside #stage) can't reach it via a plain CSS
+     sibling combinator, since it isn't a sibling of individual .slide
+     elements, only of #stage itself. */
+  document.body.classList.toggle('tone-accent', el.classList.contains('accent'));
+  document.body.classList.toggle('tone-dark', el.classList.contains('dark'));
 
   document.getElementById('footerLeft').textContent = el.dataset.footLeft || '';
   document.getElementById('footerRight').textContent = (el.dataset.footRight || (`${String(i+1).padStart(2,'0')} of ${S.length}`));
