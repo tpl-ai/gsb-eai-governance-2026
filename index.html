@@ -2,12 +2,18 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" id="viewportMeta" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Enterprise AI in Practice #2 — Governance as Advantage</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;background:#0c0a09;overflow:hidden;touch-action:none;}
-  #stageOuter{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  html,body{height:100%;background:#0c0a09;overflow:hidden;}
+  /* overflow-x:auto (not hidden): in portrait, the stage is scaled to fit
+     height, which makes it wider than the viewport by design (see
+     applyScale below) -- this lets that excess width scroll/pan natively
+     instead of getting clipped, especially once the browser is zoomed in
+     via pinch. overflow-y stays hidden since portrait's fit-to-height
+     leaves no vertical excess, and landscape has none either. */
+  #stageOuter{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow-x:auto;overflow-y:hidden;}
   #deckFrame{
     width:1280px;height:720px;border:0;flex-shrink:0;display:block;
     background:#0c0a09;transform-origin:center center;
@@ -48,7 +54,6 @@
 const frame = document.getElementById('deckFrame');
 const stageOuter = document.getElementById('stageOuter');
 const portraitHint = document.getElementById('portraitHint');
-const viewportMeta = document.getElementById('viewportMeta');
 
 /* ---- fixed 1280x720 design canvas, scaled to fit any real viewport.
    The iframe's own internal document treats its box as a genuine 1280x720
@@ -56,10 +61,33 @@ const viewportMeta = document.getElementById('viewportMeta');
    seven ported June slides we cannot edit) resolve against that fixed
    size, not the real device. This CSS transform then scales the whole
    rendered result to fit the actual screen, recomputed on resize and
-   orientation change. */
+   orientation change.
+
+   Landscape: fit to both dimensions (the smaller ratio), as before.
+   Portrait: fit to height only. Fitting to width there leaves the stage
+   using only a quarter of the screen's height (a 1280x720 canvas is far
+   wider than tall, so width is almost always the binding constraint in
+   portrait). Fitting to height instead makes the stage wider than the
+   viewport by design -- #stageOuter's overflow-x:auto (above) keeps that
+   from clipping, and native pinch-zoom/pan (see the touch handling in
+   deck.html) is how it actually gets read. */
 function applyScale(){
-  const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const scale = isPortrait
+    ? window.innerHeight / 720
+    : Math.min(window.innerWidth / 1280, window.innerHeight / 720);
   frame.style.transform = 'scale(' + scale + ')';
+
+  /* Center the scaled frame horizontally when it's wider than the
+     viewport. A scrollable flex container with justify-content:center
+     generally centers overflowing content correctly in current browsers,
+     but transform-scaled children plus centered overflow has enough
+     cross-browser history of quirks that setting the initial scroll
+     position explicitly is worth the extra certainty. */
+  requestAnimationFrame(() => {
+    const scaledWidth = 1280 * scale;
+    stageOuter.scrollLeft = Math.max(0, (scaledWidth - window.innerWidth) / 2);
+  });
 }
 applyScale();
 window.addEventListener('resize', applyScale);
@@ -106,20 +134,6 @@ document.getElementById('portraitHintDismiss').addEventListener('click', () => {
 window.addEventListener('resize', checkPortraitHint);
 window.addEventListener('orientationchange', checkPortraitHint);
 checkPortraitHint();
-
-/* ---- pinch-zoom exception: the risk-tiers image slide (index 14, "The
-   Four Risk Tiers") is dense at 2048x1117 source resolution and stays
-   hard to read even at the landscape-phone display size. Pinch-zoom is
-   disabled everywhere else so it doesn't fire accidentally during swipe
-   navigation. The deck notifies this via window.__onDeckSlideChange
-   (added to its go() function) rather than polling. */
-const RISK_IMAGE_SLIDE_INDEX = 14;
-window.__onDeckSlideChange = function(slideIndex){
-  const allowZoom = slideIndex === RISK_IMAGE_SLIDE_INDEX;
-  viewportMeta.setAttribute('content', allowZoom
-    ? 'width=device-width, initial-scale=1'
-    : 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
-};
 </script>
 </body>
 </html>

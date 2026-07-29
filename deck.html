@@ -34,7 +34,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   html,body{height:100%;background:var(--ink);}
-  body{font-family:var(--sans);overflow:hidden;touch-action:none;}
+  body{font-family:var(--sans);overflow:hidden;}
   .stage{position:fixed;inset:0;}
   .slide{
     position:absolute;inset:0;display:none;flex-direction:column;
@@ -916,13 +916,6 @@ function go(i){
   /* native options-slide two-click reveal -- same window.__pipeAdvance
      mechanism as the ported layers-stack recipe above, not a new one. */
   if(el.dataset.recLetter) optionsReveal(el);
-
-  /* let the outer shell (if this deck is embedded in its scaling iframe)
-     know which slide is active, so it can allow pinch-zoom only on the
-     dense risk-tiers image slide. */
-  if(window.parent !== window && typeof window.parent.__onDeckSlideChange === 'function'){
-    window.parent.__onDeckSlideChange(i);
-  }
 }
 
 function toggleIndex(force){
@@ -949,19 +942,34 @@ document.getElementById('indexToggleBtn').addEventListener('click', ()=> toggleI
    ArrowRight). Tap left third: back. Swipe left/right: same, ~50px
    horizontal threshold, ignored when vertical movement dominates.
    Taps on the dots row, index overlay, and index toggle are excluded
-   so their own click handlers (already wired above) run instead. */
+   so their own click handlers (already wired above) run instead.
+
+   Single-finger touches only. The moment a second finger is detected
+   (a pinch-zoom gesture), this backs off completely -- no preventDefault,
+   no swipe/tap handling -- so native pinch-zoom and the pan that follows
+   it work unhindered. Single-finger touchmove still calls preventDefault
+   (outside the excluded zones) so the browser's own drag/bounce doesn't
+   fight with swipe detection; that's a runtime veto and needs the
+   listener registered non-passive to take effect. */
 const EXCLUDED_TOUCH_TARGETS = '.dots, #indexOverlay, #indexToggleBtn';
-let touchStartX = 0, touchStartY = 0, touchExcluded = false;
+let touchStartX = 0, touchStartY = 0, touchExcluded = false, touchIsMulti = false;
 
 document.addEventListener('touchstart', (e)=>{
+  touchIsMulti = e.touches.length > 1;
   const t = e.changedTouches[0];
   touchStartX = t.clientX;
   touchStartY = t.clientY;
   touchExcluded = !!(e.target.closest && e.target.closest(EXCLUDED_TOUCH_TARGETS));
 }, {passive:true});
 
-document.addEventListener('touchend', (e)=>{
+document.addEventListener('touchmove', (e)=>{
+  if(e.touches.length > 1){ touchIsMulti = true; return; }
   if(touchExcluded) return;
+  e.preventDefault();
+}, {passive:false});
+
+document.addEventListener('touchend', (e)=>{
+  if(touchExcluded || touchIsMulti) return;
   if(document.getElementById('indexOverlay').classList.contains('show')) return;
 
   const t = e.changedTouches[0];
