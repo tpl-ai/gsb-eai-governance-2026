@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enterprise AI in Practice #2 — Governance as Advantage</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;background:#0c0a09;overflow:hidden;}
+  #stageOuter{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  #deckFrame{
+    width:1280px;height:720px;border:0;flex-shrink:0;display:block;
+    background:#0c0a09;transform-origin:center center;
+  }
+
+  /* ---- portrait orientation hint ----
+     Shown once per session on narrow, portrait screens. A 16:9 slide at
+     390px-wide portrait renders roughly 390x219 -- legible but small;
+     landscape on the same device is roughly 844x475, which reads far
+     better. Dismissing hides it for the rest of the session, not just
+     the current slide. */
+  #portraitHint{
+    position:fixed;left:0;right:0;bottom:0;z-index:100;
+    display:none;align-items:center;justify-content:space-between;gap:16px;
+    padding:16px 20px calc(16px + env(safe-area-inset-bottom));
+    background:#8C1515;color:#fff;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;
+    font-size:15px;line-height:1.3;
+  }
+  #portraitHint.show{display:flex;}
+  #portraitHint button{
+    flex-shrink:0;border:1px solid rgba(255,255,255,.5);background:transparent;color:#fff;
+    font:inherit;font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase;
+    padding:8px 14px;border-radius:3px;
+  }
+</style>
+</head>
+<body>
+<div id="stageOuter">
+  <iframe id="deckFrame" src="deck.html" title="Enterprise AI in Practice #2 — Governance as Advantage"></iframe>
+</div>
+<div id="portraitHint">
+  <span>Rotate for a larger view.</span>
+  <button id="portraitHintDismiss">Got it</button>
+</div>
+
+<script>
+const frame = document.getElementById('deckFrame');
+const portraitHint = document.getElementById('portraitHint');
+
+/* ---- fixed 1280x720 design canvas, scaled to fit any real viewport.
+   The iframe's own internal document treats its box as a genuine 1280x720
+   viewport -- vw/vh inside it (used throughout every slide, including the
+   seven ported June slides we cannot edit) resolve against that fixed
+   size, not the real device. This CSS transform then scales the whole
+   rendered result to fit the actual screen, recomputed on resize and
+   orientation change.
+
+   One formula for both orientations: fit to both dimensions (the smaller
+   ratio), so the complete slide is always visible, letterboxed top/bottom
+   in portrait or left/right in landscape -- nothing is ever cropped.
+   Pinch-zoom is how someone gets close to a dense slide (the risk matrix,
+   the Lewis graphic) from there. */
+function applyScale(){
+  const scale = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+  frame.style.transform = 'scale(' + scale + ')';
+}
+applyScale();
+window.addEventListener('resize', applyScale);
+window.addEventListener('orientationchange', applyScale);
+
+/* Keyboard nav should work immediately (e.g. a presenter clicker) without
+   requiring an initial tap/click to focus the iframe first. */
+frame.addEventListener('load', () => { frame.contentWindow.focus(); });
+
+/* Fallback: if focus ever lands on the outer shell instead of the iframe
+   (e.g. a click on the letterboxed background), forward the keydown into
+   the deck's own document so its existing handler processes it. When the
+   iframe already has focus, keydown fires there directly and this never
+   runs -- no double-handling. */
+window.addEventListener('keydown', (e) => {
+  const innerWin = frame.contentWindow;
+  if(!innerWin) return;
+  innerWin.document.dispatchEvent(new innerWin.KeyboardEvent('keydown', {key: e.key, bubbles:true}));
+});
+
+/* ---- portrait hint: show once per session on narrow portrait screens.
+   sessionStorage can throw (private browsing in some browsers, storage
+   disabled, opaque-origin contexts like a local file:// open) -- fall
+   back to an in-memory flag so the hint still behaves correctly for the
+   current page load even when storage isn't available. */
+let portraitHintDismissedFallback = false;
+function isPortraitHintDismissed(){
+  try{ return !!sessionStorage.getItem('portraitHintDismissed'); }
+  catch(e){ return portraitHintDismissedFallback; }
+}
+function markPortraitHintDismissed(){
+  portraitHintDismissedFallback = true;
+  try{ sessionStorage.setItem('portraitHintDismissed', '1'); }catch(e){}
+}
+function checkPortraitHint(){
+  const isPortrait = window.innerHeight > window.innerWidth;
+  const isNarrow = window.innerWidth <= 820;
+  portraitHint.classList.toggle('show', isPortrait && isNarrow && !isPortraitHintDismissed());
+}
+document.getElementById('portraitHintDismiss').addEventListener('click', () => {
+  markPortraitHintDismissed();
+  portraitHint.classList.remove('show');
+});
+window.addEventListener('resize', checkPortraitHint);
+window.addEventListener('orientationchange', checkPortraitHint);
+checkPortraitHint();
+</script>
+</body>
+</html>
